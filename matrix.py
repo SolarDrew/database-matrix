@@ -33,7 +33,7 @@ class DatabaseMatrix(Database):
             olddata.update(data)
             data = olddata
         await conn.connection.send_state_event(room_id,
-                                               "m.room.database",
+                                               "opsdroid.database",
                                                data,
                                                state_key=key)
 
@@ -47,7 +47,7 @@ class DatabaseMatrix(Database):
             room_id = conn.room_ids['main']
 
         try:
-            data = await conn.connection._send("GET", f"/rooms/{room_id}/state/m.room.database/{key}")
+            data = await conn.connection._send("GET", f"/rooms/{room_id}/state/opsdroid.database/{key}")
         except MatrixRequestError:
             data = {}
 
