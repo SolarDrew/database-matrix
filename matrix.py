@@ -11,6 +11,7 @@ class DatabaseMatrix(Database):
         """Start the database connection."""
         self.name = "matrix"
         self.config = config
+        self.room = 'main'
         logging.debug('Loaded matrix database connector')
 
     async def connect(self, opsdroid):
@@ -19,16 +20,14 @@ class DatabaseMatrix(Database):
         self.opsdroid = opsdroid
         logging.info("Plugged into the matrix")
 
-    async def put(self, key, data, room=None):
+    async def put(self, key, data):
         """Insert or replace an object into the database for a given key."""
         logging.debug(f"Putting {key} into matrix")
         conn = self.connector
-        if room:
-            room_id = room if room[0] == '!' else conn.room_ids[room]
-        else:
-            room_id = conn.room_ids['main']
+        room = self.room
+        room_id = room if room[0] == '!' else conn.room_ids[room]
 
-        olddata = await self.get(key, room_id)
+        olddata = await self.get(key)
         if olddata:
             olddata.update(data)
             data = olddata
@@ -37,14 +36,12 @@ class DatabaseMatrix(Database):
                                                data,
                                                state_key=key)
 
-    async def get(self, key, room=None):
+    async def get(self, key):
         """Get a document from the database for a given key."""
         logging.debug(f"Getting {key} from matrix")
         conn = self.connector
-        if room:
-            room_id = room if room[0] == '!' else conn.room_ids[room]
-        else:
-            room_id = conn.room_ids['main']
+        room = self.room
+        room_id = room if room[0] == '!' else conn.room_ids[room]
 
         try:
             data = await conn.connection._send("GET", f"/rooms/{room_id}/state/opsdroid.database/{key}")
