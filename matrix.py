@@ -27,10 +27,6 @@ class DatabaseMatrix(Database):
         room = self.room
         room_id = room if room[0] == '!' else conn.room_ids[room]
 
-        olddata = await self.get(key)
-        if olddata:
-            olddata.update(data)
-            data = olddata
         await conn.connection.send_state_event(room_id,
                                                "opsdroid.database",
                                                data,
