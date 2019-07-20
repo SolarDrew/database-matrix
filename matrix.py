@@ -2,6 +2,7 @@ import logging
 
 from matrix_client.errors import MatrixRequestError
 from opsdroid.database import Database
+from opsdroid.connector.matrix.events import MatrixStateEvent
 
 
 class DatabaseMatrix(Database):
@@ -23,24 +24,22 @@ class DatabaseMatrix(Database):
     async def put(self, key, data):
         """Insert or replace an object into the database for a given key."""
         logging.debug(f"Putting {key} into matrix")
-        conn = self.connector
         room = self.room
         room_id = room if room[0] == '!' else conn.room_ids[room]
 
-        await conn.connection.send_state_event(room_id,
-                                               "opsdroid.database",
-                                               data,
-                                               state_key=key)
+        await self.opsdroid.send(MatrixStateEvent(key='opsdroid.database',
+                                                  content={key: data},
+                                                  target=room_id,
+                                                  connector=self.connector))
 
     async def get(self, key):
         """Get a document from the database for a given key."""
         logging.debug(f"Getting {key} from matrix")
-        conn = self.connector
         room = self.room
         room_id = room if room[0] == '!' else conn.room_ids[room]
 
         try:
-            data = await conn.connection._send("GET", f"/rooms/{room_id}/state/opsdroid.database/{key}")
+            data = await self.connector.get_state_event(room_id, f'opsdroid.database/{key}')
         except MatrixRequestError:
             data = {}
 
