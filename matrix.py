@@ -48,4 +48,4 @@ class DatabaseMatrix(Database):
 
     @property
     def connector(self):
-        return self.opsdroid.default_connector
+        return self.opsdroid._connector_names['matrix']
