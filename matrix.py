@@ -32,8 +32,12 @@ class DatabaseMatrix(Database):
 
         _LOGGER.debug(f"Putting {key} into matrix room {room_id}")
 
-        data = await self.get_state_event(room_id)
-        data.update({key: value})
+        ori_data = await self.get_state_event(room_id)
+        data = {key: value}
+        data = {**ori_data, **data}
+        if data == ori_data:
+            _LOGGER.debug("Not updating matrix state, as content hasn't changed.")
+            return
 
         await self.opsdroid.send(MatrixStateEvent(key=self._state_key,
                                                   content=data,
