@@ -64,5 +64,10 @@ class DatabaseMatrix(Database):
         return self.opsdroid._connector_names['matrix']
 
     async def get_state_event(self, room_id):
-        return await self.connector.connection._send("GET",
-                                                     quote(f"/rooms/{room_id}/state/{self._state_key}"))
+        try:
+            return await self.connector.connection._send("GET",
+                                                         quote(f"/rooms/{room_id}/state/{self._state_key}"))
+        except MatrixRequestError as e:
+            if e.code != 404:
+                raise e
+            return {}
