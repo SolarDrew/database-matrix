@@ -25,15 +25,18 @@ class DatabaseMatrix(Database):
         self.opsdroid = opsdroid
         _LOGGER.info("Plugged into the matrix")
 
-    async def put(self, key, data):
+    async def put(self, key, value):
         """Insert or replace an object into the database for a given key."""
         room = self.room
         room_id = room if room[0] == '!' else self.connector.room_ids[room]
 
         _LOGGER.debug(f"Putting {key} into matrix room {room_id}")
 
+        data = await self.get_state_event(room_id)
+        data.update({key: value})
+
         await self.opsdroid.send(MatrixStateEvent(key=self._state_key,
-                                                  content={key: data},
+                                                  content=data,
                                                   target=room_id,
                                                   connector=self.connector))
 
