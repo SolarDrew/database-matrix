@@ -27,7 +27,7 @@ class DatabaseMatrix(Database):
 
     async def put(self, key, value):
         """Insert or replace an object into the database for a given key."""
-        room = self.room
+        room = self.room or 'main'
         room_id = room if room[0] == '!' else self.connector.room_ids[room]
 
         _LOGGER.debug(f"Putting {key} into matrix room {room_id}")
@@ -46,7 +46,7 @@ class DatabaseMatrix(Database):
 
     async def get(self, key):
         """Get a document from the database for a given key."""
-        room = self.room
+        room = self.room or 'main'
         room_id = room if room.startswith('!') else self.connector.room_ids[room]
 
         _LOGGER.debug(f"Getting {key} from matrix room {room_id}")
