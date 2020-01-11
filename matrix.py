@@ -32,7 +32,7 @@ class DatabaseMatrix(Database):
 
         _LOGGER.debug(f"===== Putting {key} into matrix room {room_id}")
 
-        ori_data = await self.get_state_event(room_id)
+        ori_data = await self.get_state_event(room_id, key)
         data = {key: value}
         data = {**ori_data, **data}
         if data == ori_data:
@@ -43,7 +43,8 @@ class DatabaseMatrix(Database):
         await self.opsdroid.send(MatrixStateEvent(key=self._state_key,
                                                   content=data,
                                                   target=room_id,
-                                                  connector=self.connector))
+                                                  connector=self.connector,
+                                                  state_key=key))
 
     async def get(self, key):
         """Get a document from the database for a given key."""
@@ -53,7 +54,7 @@ class DatabaseMatrix(Database):
         _LOGGER.debug(f"Getting {key} from matrix room {room_id}")
 
         try:
-            data = await self.get_state_event(room_id)
+            data = await self.get_state_event(room_id, key)
             data = data.get(key)
         except MatrixRequestError:
             data = None
@@ -64,10 +65,10 @@ class DatabaseMatrix(Database):
     def connector(self):
         return self.opsdroid._connector_names['matrix']
 
-    async def get_state_event(self, room_id):
+    async def get_state_event(self, room_id, key):
         try:
             return await self.connector.connection._send("GET",
-                                                         quote(f"/rooms/{room_id}/state/{self._state_key}"))
+                                quote(f"/rooms/{room_id}/state/{self._state_key}/{key}"))
         except MatrixRequestError as e:
             if e.code != 404:
                 raise e
