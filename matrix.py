@@ -11,18 +11,18 @@ _LOGGER = logging.getLogger(__name__)
 class DatabaseMatrix(Database):
     """A module for opsdroid to allow memory to persist in matrix room state."""
 
-    def __init__(self, config):
+    def __init__(self, config, opsdroid=None):
         """Start the database connection."""
+        super().__init__(config, opsdroid=opsdroid)
         self.name = "matrix"
-        self.config = config
         self.room = 'main'
         self._state_key = "opsdroid.database"
         _LOGGER.debug('Loaded matrix database connector')
 
-    async def connect(self, opsdroid):
+    async def connect(self):
         """Connect to the database."""
         # Currently can't actually get connectors when this runs, so just store opsdroid instead
-        self.opsdroid = opsdroid
+        _LOGGER.info(self.opsdroid)
         _LOGGER.info("Plugged into the matrix")
 
     async def put(self, key, value):
