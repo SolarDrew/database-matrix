@@ -16,59 +16,83 @@ class DatabaseMatrix(Database):
         super().__init__(config, opsdroid=opsdroid)
         self.name = "matrix"
         self.room = config.get("default_room", "main")
-        self._state_key = config.get("state_key","opsdroid.database")
-        _LOGGER.debug('Loaded matrix database connector')
+        self._event_type = "opsdroid.database"
+        self._single_state_key = config.get("single_state_key", True)
+        _LOGGER.debug("Loaded matrix database connector")
 
     async def connect(self):
         """Connect to the database."""
-        # Currently can't actually get connectors when this runs, so just store opsdroid instead
-        _LOGGER.info(self.opsdroid)
-        _LOGGER.info("Plugged into the matrix")
+        _LOGGER.info("Matrix Database connector initialised.")
 
     async def put(self, key, value):
         """Insert or replace an object into the database for a given key."""
-        room = self.room or 'main'
-        room_id = room if room[0] == '!' else self.connector.room_ids[room]
 
-        _LOGGER.debug(f"===== Putting {key} into matrix room {room_id}")
+        # If the single state key flag is set then use that else use state key.
+        state_key = "" if self._single_state_key is True else key
 
-        ori_data = await self.get_state_event(room_id, key)
-        data = {key: value}
-        data = {**ori_data, **data}
+        room = self.room or "main"
+        room_id = room if room[0] == "!" else self.connector.room_ids[room]
+
+        _LOGGER.debug(f"Putting {key} into matrix room {room_id}.")
+
+        ori_data = await self.get_state_event(room_id, state_key)
+
+        if self._single_state_key:
+            value = {key: value}
+
+        elif not isinstance(value, dict):
+            raise ValueError("When single_state_key is False value must be a dict.")
+
+        data = {**ori_data, **value}
+
         if data == ori_data:
             _LOGGER.debug("Not updating matrix state, as content hasn't changed.")
             return
+
         _LOGGER.debug(f"===== Putting {key} into matrix room {room_id} with {data}")
 
-        await self.opsdroid.send(MatrixStateEvent(key=self._state_key,
-                                                  content=data,
-                                                  target=room_id,
-                                                  connector=self.connector,
-                                                  state_key=key))
+        await self.opsdroid.send(
+            MatrixStateEvent(
+                key=self._event_type,
+                content=data,
+                target=room_id,
+                connector=self.connector,
+                state_key=state_key,
+            )
+        )
 
     async def get(self, key):
         """Get a document from the database for a given key."""
-        room = self.room or 'main'
-        room_id = room if room.startswith('!') else self.connector.room_ids[room]
+        room = self.room or "main"
+        room_id = room if room.startswith("!") else self.connector.room_ids[room]
 
         _LOGGER.debug(f"Getting {key} from matrix room {room_id}")
 
         try:
             data = await self.get_state_event(room_id, key)
-            data = data.get(key)
-        except MatrixRequestError:
+        except MatrixRequestError as e:
+            _LOGGER.info(f"Failed to get state event with state_key={key}: {e}")
             data = None
+
+        if not data:
+            return
+
+        if self._single_state_key:
+            data = data.get(key)
 
         return data
 
     @property
     def connector(self):
-        return self.opsdroid._connector_names['matrix']
+        return self.opsdroid._connector_names["matrix"]
 
     async def get_state_event(self, room_id, key):
+
+        url = f"/rooms/{room_id}/state/{self._event_type}"
+        if not self._single_state_key:
+            url += f"/{key}"
         try:
-            return await self.connector.connection._send("GET",
-                                quote(f"/rooms/{room_id}/state/{self._state_key}/{key}"))
+            return await self.connector.connection._send("GET", quote(url))
         except MatrixRequestError as e:
             if e.code != 404:
                 raise e

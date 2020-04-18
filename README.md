@@ -15,5 +15,5 @@ connectors:
 databases:
   matrix:
     default_room: 'main'
-    state_key: 'opsdroid.database'
+    single_state_key: 'opsdroid.database'
 ```
