@@ -15,8 +15,8 @@ class DatabaseMatrix(Database):
         """Start the database connection."""
         super().__init__(config, opsdroid=opsdroid)
         self.name = "matrix"
-        self.room = 'main'
-        self._state_key = "opsdroid.database"
+        self.room = config.get("default_room", "main")
+        self._state_key = config.get("state_key","opsdroid.database")
         _LOGGER.debug('Loaded matrix database connector')
 
     async def connect(self):

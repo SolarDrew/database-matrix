@@ -13,5 +13,7 @@ connectors:
   matrix # see connector-matrix configuration
   
 databases:
-  matrix
+  matrix:
+    default_room: 'main'
+    state_key: 'opsdroid.database'
 ```
