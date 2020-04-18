@@ -241,12 +241,14 @@ async def test_default_update_single_state_key(patched_send, opsdroid_matrix):
 
 
 @pytest.mark.asyncio
-async def test_get(patched_send, opsdroid_matrix):
+async def test_get_single_state_key(patched_send, opsdroid_matrix):
     patched_send.return_value = {"twim": {"hello": "world"}}
 
     db = DatabaseMatrix({"single_state_key": True}, opsdroid=opsdroid_matrix)
 
     data = await db.get("twim")
+
+    patched_send.assert_called_once_with("GET", "/rooms/%21notaroomid/state/opsdroid.database")
 
     assert data == {"hello": "world"}
 
@@ -258,6 +260,8 @@ async def test_get(patched_send, opsdroid_matrix):
     db = DatabaseMatrix({"single_state_key": False}, opsdroid=opsdroid_matrix)
 
     data = await db.get("twim")
+
+    patched_send.assert_called_once_with("GET", "/rooms/%21notaroomid/state/opsdroid.database/twim")
 
     assert data == {"hello": "world"}
 

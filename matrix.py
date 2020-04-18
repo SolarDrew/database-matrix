@@ -18,7 +18,7 @@ class DatabaseMatrix(Database):
         self.room = config.get("default_room", "main")
         self._event_type = "opsdroid.database"
         self._single_state_key = config.get("single_state_key", True)
-        _LOGGER.debug("Loaded matrix database connector")
+        _LOGGER.debug("Loaded matrix database connector.")
 
     async def connect(self):
         """Connect to the database."""
@@ -66,12 +66,14 @@ class DatabaseMatrix(Database):
         room = self.room or "main"
         room_id = room if room.startswith("!") else self.connector.room_ids[room]
 
-        _LOGGER.debug(f"Getting {key} from matrix room {room_id}")
+        state_key = "" if self._single_state_key is True else self._single_state_key or key
+
+        _LOGGER.debug(f"Getting {key} from matrix room {room_id} with state_key={state_key}.")
 
         try:
-            data = await self.get_state_event(room_id, key)
+            data = await self.get_state_event(room_id, state_key)
         except MatrixRequestError as e:
-            _LOGGER.info(f"Failed to get state event with state_key={key}: {e}")
+            _LOGGER.info(f"Failed to get state event with state_key={state_key}: {e}")
             data = None
 
         if not data:
@@ -92,6 +94,7 @@ class DatabaseMatrix(Database):
         if key:
             url += f"/{key}"
         try:
+            _LOGGER.debug(f"Making request to {url}.")
             return await self.connector.connection._send("GET", quote(url))
         except MatrixRequestError as e:
             if e.code != 404:
