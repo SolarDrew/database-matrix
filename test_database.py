@@ -11,11 +11,6 @@ from opsdroid.connector.matrix import ConnectorMatrix
 from opsdroid.core import OpsDroid
 
 
-def coro_return(patched, return_value):
-    patched.return_value = asyncio.Future()
-    patched.return_value.set_result(return_value)
-
-
 @pytest.fixture
 def patched_send(mocker):
     return mocker.patch("matrix_api_async.api_asyncio.AsyncHTTPAPI._send")
