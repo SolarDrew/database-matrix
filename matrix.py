@@ -28,7 +28,7 @@ class DatabaseMatrix(Database):
         """Insert or replace an object into the database for a given key."""
 
         # If the single state key flag is set then use that else use state key.
-        state_key = "" if self._single_state_key is True else key
+        state_key = "" if self._single_state_key is True else self._single_state_key or key
 
         room = self.room or "main"
         room_id = room if room[0] == "!" else self.connector.room_ids[room]
@@ -89,7 +89,7 @@ class DatabaseMatrix(Database):
     async def get_state_event(self, room_id, key):
 
         url = f"/rooms/{room_id}/state/{self._event_type}"
-        if not self._single_state_key:
+        if key:
             url += f"/{key}"
         try:
             return await self.connector.connection._send("GET", quote(url))

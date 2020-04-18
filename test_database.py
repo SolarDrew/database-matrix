@@ -61,6 +61,26 @@ async def test_default_config(patched_send, opsdroid_matrix):
 
 
 @pytest.mark.asyncio
+async def test_put_custom_state_key(patched_send, opsdroid_matrix):
+    patched_send.return_value = {}
+
+    db = DatabaseMatrix({"single_state_key": "wibble"}, opsdroid=opsdroid_matrix)
+    await db.put("twim", {"hello": "world"})
+
+    patched_send.assert_has_calls(
+        [
+            call("GET", "/rooms/%21notaroomid/state/opsdroid.database/wibble"),
+            call(
+                "PUT",
+                "/rooms/%21notaroomid/state/opsdroid.database/wibble",
+                {"twim": {"hello": "world"}},
+                query_params={},
+            ),
+        ]
+    )
+
+
+@pytest.mark.asyncio
 async def test_single_state_key_false(patched_send, opsdroid_matrix):
     patched_send.return_value = {}
 
@@ -157,7 +177,7 @@ async def test_default_update_same_key(patched_send, opsdroid_matrix):
 
 
 @pytest.mark.asyncio
-async def test_default_update_same_key_single_state_key(patched_send, opsdroid_matrix):
+async def test_update_same_key_single_state_key(patched_send, opsdroid_matrix):
     patched_send.return_value = {"twim": {"hello": "world"}}
 
     value = {"hello": "bob"}
