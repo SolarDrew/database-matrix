@@ -31,7 +31,7 @@ class DatabaseMatrix(Database):
         state_key = "" if self._single_state_key is True else self._single_state_key or key
 
         room = self.room or "main"
-        room_id = room if room[0] == "!" else self.connector.room_ids[room]
+        room_id = room if room.startswith("!") else self.connector.room_ids[room]
 
         _LOGGER.debug(f"Putting {key} into matrix room {room_id}.")
 
@@ -99,4 +99,5 @@ class DatabaseMatrix(Database):
         except MatrixRequestError as e:
             if e.code != 404:
                 raise e
+            _LOGGER.info(f"Failed to get room state with {e}")
             return {}
