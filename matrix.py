@@ -53,7 +53,7 @@ class DatabaseMatrix(Database):
 
         await self.opsdroid.send(
             MatrixStateEvent(
-                key=self._event_type,
+                self._event_type,
                 content=data,
                 target=room_id,
                 connector=self.connector,
