@@ -70,14 +70,12 @@ class DatabaseMatrix(Database):
 
         _LOGGER.debug(f"Getting {key} from matrix room {room_id} with state_key={state_key}.")
 
-        try:
-            data = await self.get_state_event(room_id, state_key)
-        except MatrixRequestError as e:
-            _LOGGER.info(f"Failed to get state event with state_key={state_key}: {e}")
-            data = None
+        data = await self.get_state_event(room_id, state_key)
+
+        _LOGGER.debug(f"Got {data} from state request.")
 
         if not data:
-            return
+            return None
 
         if self._single_state_key:
             data = data.get(key)
@@ -97,7 +95,8 @@ class DatabaseMatrix(Database):
             _LOGGER.debug(f"Making request to {url}.")
             return await self.connector.connection._send("GET", quote(url))
         except MatrixRequestError as e:
-            if e.code != 404:
-                raise e
-            _LOGGER.info(f"Failed to get room state with {e}")
+            if e.code == 404:
+                _LOGGER.debug(f"Failed to get state event with code 404: {e}")
+            else:
+                _LOGGER.exception("Failed to get state event with unknown error.")
             return {}
